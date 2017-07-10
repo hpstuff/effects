@@ -2,6 +2,7 @@ import { merge } from 'rxjs/observable/merge';
 import { ignoreElements } from 'rxjs/operator/ignoreElements';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs/Observable';
+import 'reflect-metadata';
 
 const METADATA_KEY = '@ngrx/effects';
 

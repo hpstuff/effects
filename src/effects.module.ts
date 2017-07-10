@@ -1,42 +1,30 @@
-import { NgModule, Injector, Type, APP_BOOTSTRAP_LISTENER, OpaqueToken } from '@angular/core';
+import '@ngrx/store';
 import { Actions } from './actions';
-import { EffectsSubscription, effects } from './effects-subscription';
-import { runAfterBootstrapEffects, afterBootstrapEffects } from './bootstrap-listener';
+import { EffectsSubscription } from './effects-subscription';
 
-
-@NgModule({
-  providers: [
-    Actions,
-    EffectsSubscription,
-    {
-      provide: APP_BOOTSTRAP_LISTENER,
-      multi: true,
-      deps: [ Injector, EffectsSubscription ],
-      useFactory: runAfterBootstrapEffects
-    }
-  ]
-})
-export class EffectsModule {
-  static run(type: Type<any>) {
-    return {
-      ngModule: EffectsModule,
-      providers: [
-        EffectsSubscription,
-        type,
-        { provide: effects, useExisting: type, multi: true }
-      ]
+let effectsModule = angular.module('@ngrx/effects', ['@ngrx/store'])
+  .factory('Actions', ['Dispatcher', (d) => new Actions(d)])
+  .provider('EffectsSubscription', function() {
+    let effects = [];
+    this.run = function (effect) {
+      effects.push(effect);
     };
-  }
+    this.$get = ['Store', (Store) => new EffectsSubscription(Store, null, effects)];
 
-  static runAfterBootstrap(type: Type<any>) {
-    return {
-      ngModule: EffectsModule,
-      providers: [
-        type,
-        { provide: afterBootstrapEffects, useExisting: type, multi: true }
-      ]
-    };
-  }
+    return this;
+  });
 
-  constructor(private effectsSubscription: EffectsSubscription) {}
-}
+export const EffectsModule = {
+	module: effectsModule,
+  name: effectsModule.name,
+	effects: [],
+	add(EffectsSubscription, effect) {
+		EffectsModule.effects.push(effect);
+		EffectsSubscription.addEffects(EffectsModule.effects);
+	},
+	run(effect) {
+		EffectsModule.module = EffectsModule.module
+		.service(effect.name, effect)
+		.run(['EffectsSubscription', effect.name, EffectsModule.add]);
+	}
+};

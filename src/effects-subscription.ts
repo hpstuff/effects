@@ -1,19 +1,14 @@
-import { OpaqueToken, Inject, SkipSelf, Optional, Injectable, OnDestroy } from '@angular/core';
 import { Action, Store } from '@ngrx/store';
 import { Observer } from 'rxjs/Observer';
 import { Subscription } from 'rxjs/Subscription';
 import { merge } from 'rxjs/observable/merge';
 import { mergeEffects } from './effects';
 
-
-export const effects = new OpaqueToken('ngrx/effects: Effects');
-
-@Injectable()
-export class EffectsSubscription extends Subscription implements OnDestroy {
+export class EffectsSubscription extends Subscription {
   constructor(
-    @Inject(Store) private store: Observer<Action>,
-    @Optional() @SkipSelf() public parent: EffectsSubscription,
-    @Optional() @Inject(effects) effectInstances?: any[]
+    private store: Store<any> | Observer<Action>,
+    public parent: EffectsSubscription,
+    effectInstances?: any[]
   ) {
     super();
 
@@ -33,9 +28,4 @@ export class EffectsSubscription extends Subscription implements OnDestroy {
     this.add(merged.subscribe(this.store));
   }
 
-  ngOnDestroy() {
-    if (!this.closed) {
-      this.unsubscribe();
-    }
-  }
 }
